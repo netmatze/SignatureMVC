@@ -1,31 +1,164 @@
 ﻿@{
-    ViewBag.Title = "Home Page";
+    ViewBag.Title = "signatur in the web";
 }
-
-<div class="jumbotron">
-    <h1>ASP.NET</h1>
-    <p class="lead">ASP.NET is a free web framework for building great Web sites and Web applications using HTML, CSS and JavaScript.</p>
-    <p><a href="https://asp.net" class="btn btn-primary btn-lg">Learn more &raquo;</a></p>
+@*<link rel="stylesheet" type="text/css" href="style.css" media="screen" />*@
+<style>
+    .reportsDiv {
+        border: 1px #000 solid;
+        min-height: 900px;
+        width: 800px;
+    }
+</style>
+<h2>signature in the web</h2>
+<div id="wrap">
+    <div id="paint">
+        <input type="button" id="btnUnterschrift" name="btnUnterschrift" value="Unterschrift einfügen" onclick="unterschreiben()" />
+        <input type="button" id="btnSignieren" name="btnSignieren" value="Dokument signieren" />
+        <br /><br />
+        <canvas id="paintCanvas" width="600" height="120" style="border: 1px solid black;"></canvas>
+        <br /><br />
+        <input type="button" id="btnClear" name="btnClear" value="Löschen" onclick="clearCanvas()" />
+    </div>
+    <div>
+        <button class="btn yellow" style="width: 253px;" id="RunReportBtn" onclick="RunReport()" hidden="true">
+            Run Reports
+        </button>
+        <button class="btn yellow" style="width: 253px;" id="LoadReportBtn" onclick="LoadReport()" hidden="true">
+            Load Reports
+        </button>        
+    </div>
+    <div>
+        <div class="reportsDiv" id="reportsDiv">
+        </div>
+    </div>
 </div>
-
-<div class="row">
-    <div class="col-md-4">
-        <h2>Getting started</h2>
-        <p>
-            ASP.NET MVC gives you a powerful, patterns-based way to build dynamic websites that
-            enables a clean separation of concerns and gives you full control over markup
-            for enjoyable, agile development.
-        </p>
-        <p><a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkId=301865">Learn more &raquo;</a></p>
-    </div>
-    <div class="col-md-4">
-        <h2>Get more libraries</h2>
-        <p>NuGet is a free Visual Studio extension that makes it easy to add, remove, and update libraries and tools in Visual Studio projects.</p>
-        <p><a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkId=301866">Learn more &raquo;</a></p>
-    </div>
-    <div class="col-md-4">
-        <h2>Web Hosting</h2>
-        <p>You can easily find a web hosting company that offers the right mix of features and price for your applications.</p>
-        <p><a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkId=301867">Learn more &raquo;</a></p>
-    </div>
+<div id="footer">
 </div>
+<script>
+    var canvas = document.getElementById('paintCanvas');
+    var ctx = canvas.getContext('2d');
+
+    var painting = document.getElementById('paint');
+    var paint_style = getComputedStyle(painting);
+
+    var mouse = { x: 0, y: 0 };
+
+    window.addEventListener("load", function () {
+        RunReport();
+    });;
+
+    canvas.addEventListener('mousemove', function (e) {
+        mouse.x = e.pageX - this.offsetLeft;
+        mouse.y = e.pageY - this.offsetTop;
+    }, false);
+
+    ctx.lineWidth = 3;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#00AAFF';
+
+    canvas.addEventListener('mousedown', function (e) {
+        ctx.beginPath();
+        ctx.moveTo(mouse.x, mouse.y);
+
+        canvas.addEventListener('mousemove', onPaint, false);
+    }, false);
+
+    canvas.addEventListener('mouseup', function () {
+        canvas.removeEventListener('mousemove', onPaint, false);
+    }, false);
+
+    var onPaint = function () {
+        ctx.lineTo(mouse.x, mouse.y);
+        ctx.stroke();
+    };
+
+    function clearCanvas() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function RunReport() {
+        $.ajax({
+            url: '/Home/ShowReport',
+            type: 'GET',
+            success: function (response) {
+                if (response.result == "-2") {
+                    alert('Error during display of report' );
+                }
+                else {
+                    $('#reportsDiv').load('Home/RefreshReport');
+                }
+            },
+            error: function (xhr, status, error) {
+                displayErrorMessage('Error during display of report');
+            }
+        });
+    }
+
+    function LoadReport() {
+        $.ajax({
+            url: '/Home/LoadReport',
+            type: 'GET',
+            success: function (response) {
+                if (response.result == "-2") {
+                    alert('Error during display of report');
+                }
+                else {
+                    $('#reportsDiv').load('Home/RefreshLoadReport');
+                }
+            },
+            error: function (xhr, status, error) {
+                alert(error);
+                displayErrorMessage('Error during display of report');
+            }
+        });
+    }
+
+    function unterschreiben() {
+        var file = convertCanvasToImage(canvas);
+        Index();
+        Upload(file);
+        LoadReport();
+    }
+
+    function Index() {
+        $.ajax({
+            url: '@Url.Action("Index", "Home")',
+            type: 'Get',
+            cache: false,
+            success: function () {
+            },
+            error: function () {
+                alert('Error occured');
+            }
+        });
+    }
+
+    function Upload(file) {
+        var files = [file];
+        jQuery.ajax({
+            type: 'POST',
+            url: '@Url.Action("FileUpload", "Home")',
+            contentType: "application/json; charset=utf-8",
+            datatype: 'json',
+            data: JSON.stringify(files),
+            async : false,
+            success: function (data) {
+                alert('ready');
+
+            },
+            failure: function (errMsg) {
+                alert('error');
+        }
+        });
+    }
+
+    function convertCanvasToImage(canvas) {
+        var image = new Image();
+        var data = canvas.data;
+        image.src = canvas.toDataURL("image/png");
+        return image.src;
+    }
+
+</script>
+<script src="http://code.jquery.com/jquery.min.js"></script>
