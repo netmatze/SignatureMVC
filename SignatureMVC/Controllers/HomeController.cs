@@ -35,11 +35,13 @@ namespace SignatureMVC.Controllers
             var base64 = role.Split(',')[1];
             byte[] bytes = Convert.FromBase64String(base64);
             string strReportName = "Bericht.rpt";
+            // Gererate from Report
             //ReportDocument rd = new ReportDocument();
             //string strRptPath = System.Web.HttpContext.Current.Server.MapPath("~/") + "App_Data//" + strReportName;
-            string strRptPath = System.Web.HttpContext.Current.Server.MapPath("~/") + "App_Data//" + "Bericht.pdf";
             //rd.Load(strRptPath);            
             //Stream stream = rd.ExportToStream(ExportFormatType.PortableDocFormat);// ExportFormatType.PortableDocFormat, System.Web.HttpContext.Current.Response, false, "crReport");
+            // Use Bericht.pdf
+            string strRptPath = System.Web.HttpContext.Current.Server.MapPath("~/") + "App_Data//" + "Bericht.pdf";
             FileStream fileStream = new FileStream(strRptPath, FileMode.Open, FileAccess.Read);
             fileStream.Position = 0;
             Document pdfDocument = new Document(fileStream);
